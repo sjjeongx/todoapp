@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <div class="background-blobs">
@@ -28,9 +30,21 @@
             <p id="date-display">Date</p>
         </header>
 
-        <div class="input-group">
-            <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
-            <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+        <div class="input-container">
+            <div class="input-row main-input">
+                <input type="text" id="todo-input" placeholder="Add a new task..." autocomplete="off">
+                <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div class="input-row secondary-input">
+                <input type="datetime-local" id="todo-date" aria-label="Due Date">
+                <select id="todo-category" aria-label="Category">
+                    <option value="Personal">Personal</option>
+                    <option value="Work">Work</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Urgent">Urgent</option>
+                    <option value="Health">Health</option>
+                </select>
+            </div>
         </div>
 
         <ul id="todo-list">
@@ -45,4 +59,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
