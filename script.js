@@ -7,17 +7,29 @@ const todoList = document.getElementById('todo-list');
 const itemsLeft = document.getElementById('items-left');
 const clearCompletedBtn = document.getElementById('clear-completed');
 const dateDisplay = document.getElementById('date-display');
+const themeToggle = document.getElementById('theme-toggle');
+const progressBar = document.getElementById('progress-bar');
+const searchInput = document.getElementById('search-input');
+const filterBtns = document.querySelectorAll('.filter-btn');
 
 // Constants
 const STORAGE_KEY = 'todoApp_tasks';
+const THEME_KEY = 'todoApp_theme';
+const SUCCESS_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'; // Simple ding sound
 
 // State
 let tasks = [];
 let draggingItem = null;
 let draggingIndex = null;
+const successAudio = new Audio(SUCCESS_SOUND_URL);
+let filterState = {
+    search: '',
+    status: 'all' // all, active, completed
+};
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    loadTheme();
     loadTasks();
     displayDate();
     renderTasks();
@@ -29,12 +41,38 @@ todoInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addTask();
 });
 clearCompletedBtn.addEventListener('click', clearCompleted);
+themeToggle.addEventListener('click', toggleTheme);
+searchInput.addEventListener('input', handleSearch);
+filterBtns.forEach(btn => btn.addEventListener('click', handleFilter));
 
 // Drag & Drop Event Listeners on List
 todoList.addEventListener('dragover', handleDragOver);
 todoList.addEventListener('drop', handleDrop);
 
 // Functions
+
+function loadTheme() {
+    const storedTheme = localStorage.getItem(THEME_KEY);
+    if (storedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        updateThemeIcon(true);
+    }
+}
+
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-theme');
+    localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+    updateThemeIcon(isLight);
+}
+
+function updateThemeIcon(isLight) {
+    const icon = themeToggle.querySelector('i');
+    if (isLight) {
+        icon.className = 'fa-solid fa-moon';
+    } else {
+        icon.className = 'fa-solid fa-sun';
+    }
+}
 
 function displayDate() {
     const options = { weekday: 'long', month: 'short', day: 'numeric' };
@@ -52,6 +90,7 @@ function loadTasks() {
 function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     updateItemsLeft();
+    updateProgress();
 }
 
 function addTask() {
@@ -60,13 +99,18 @@ function addTask() {
     const category = todoCategory.value;
 
     if (text === '') return;
+    if (text.length > 500) {
+        alert('Task is too long (max 500 characters).');
+        return;
+    }
 
     const newTask = {
         id: Date.now(),
         text: text,
         completed: false,
         dueDate: date,
-        category: category
+        category: category,
+        subtasks: []
     };
 
     tasks.unshift(newTask); // Add to top
@@ -81,12 +125,129 @@ function addTask() {
 function toggleTask(id) {
     tasks = tasks.map(task => {
         if (task.id === id) {
-            return { ...task, completed: !task.completed };
+            const newStatus = !task.completed;
+            if (newStatus) {
+                playSuccessSound();
+            }
+            return { ...task, completed: newStatus };
         }
         return task;
     });
     saveTasks();
     renderTasks();
+    checkAllCompleted();
+}
+
+function playSuccessSound() {
+    successAudio.currentTime = 0;
+    successAudio.volume = 0.5;
+    successAudio.play().catch(e => console.log('Audio play failed:', e));
+}
+
+function checkAllCompleted() {
+    if (tasks.length === 0) return;
+    const allCompleted = tasks.every(task => task.completed);
+    if (allCompleted) {
+        triggerConfetti();
+    }
+}
+
+function triggerConfetti() {
+    // Canvas Confetti
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#38bdf8', '#818cf8', '#f472b6']
+        });
+        confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#38bdf8', '#818cf8', '#f472b6']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+}
+
+function updateProgress() {
+    if (tasks.length === 0) {
+        progressBar.style.width = '0%';
+        return;
+    }
+    const completedCount = tasks.filter(t => t.completed).length;
+    const percentage = (completedCount / tasks.length) * 100;
+    progressBar.style.width = `${percentage}%`;
+}
+
+// Subtasks Logic
+function addSubtask(taskId, text) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task && text.trim() !== '') {
+        task.subtasks = task.subtasks || [];
+        task.subtasks.push({
+            id: Date.now(),
+            text: text,
+            completed: false
+        });
+        saveTasks();
+        renderTasks();
+    }
+}
+
+function toggleSubtask(taskId, subtaskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.subtasks) {
+        task.subtasks = task.subtasks.map(st =>
+            st.id === subtaskId ? { ...st, completed: !st.completed } : st
+        );
+        saveTasks();
+        renderTasks();
+    }
+}
+
+function deleteSubtask(taskId, subtaskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.subtasks) {
+        task.subtasks = task.subtasks.filter(st => st.id !== subtaskId);
+        saveTasks();
+        renderTasks();
+    }
+}
+
+// Filter Logic
+function handleSearch(e) {
+    filterState.search = e.target.value.toLowerCase();
+    renderTasks();
+}
+
+function handleFilter(e) {
+    filterBtns.forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    filterState.status = e.target.dataset.filter;
+    renderTasks();
+}
+
+function getFilteredTasks() {
+    return tasks.filter(task => {
+        // Status Filter
+        if (filterState.status === 'active' && task.completed) return false;
+        if (filterState.status === 'completed' && !task.completed) return false;
+
+        // Search Filter
+        if (filterState.search && !task.text.toLowerCase().includes(filterState.search)) return false;
+
+        return true;
+    });
 }
 
 function deleteTask(id) {
@@ -145,10 +306,14 @@ function enableEditMode(id) {
     const li = document.querySelector(`li[data-id="${id}"]`);
     const textSpan = li.querySelector('.todo-text');
 
+    // Check if already editing
+    if (textSpan.tagName === 'INPUT') return;
+
     const input = document.createElement('input');
     input.type = 'text';
     input.value = task.text;
     input.className = 'todo-text-input';
+    input.maxLength = 500;
 
     // Replace span with input
     textSpan.replaceWith(input);
@@ -192,6 +357,9 @@ function handleDragOver(e) {
     e.preventDefault(); // Necessary to allow dropping
     e.dataTransfer.dropEffect = 'move';
 
+    // Only allow drag reordering if not searching/filtering
+    if (filterState.search !== '' || filterState.status !== 'all') return;
+
     const afterElement = getDragAfterElement(todoList, e.clientY);
     const draggable = document.querySelector('.dragging');
     if (!draggable) return;
@@ -205,6 +373,7 @@ function handleDragOver(e) {
 
 function handleDrop(e) {
     e.preventDefault();
+    if (filterState.search !== '' || filterState.status !== 'all') return;
 
     // Reconstruct tasks array based on new DOM order
     const newTasksOrder = [];
@@ -244,15 +413,36 @@ function getTaskIndex(id) {
 
 function renderTasks() {
     todoList.innerHTML = '';
+    const displayTasks = getFilteredTasks();
 
-    tasks.forEach(task => {
+    displayTasks.forEach(task => {
         const li = document.createElement('li');
         li.className = `todo-item ${task.completed ? 'completed' : ''}`;
         li.dataset.id = task.id;
-        li.draggable = true; // Enable drag
+        li.draggable = filterState.search === '' && filterState.status === 'all'; // Enable drag only when no filter
 
         const formattedDate = formatDueDate(task.dueDate);
         const overdueClass = isOverdue(task.dueDate) && !task.completed ? 'overdue' : '';
+
+        // Generate Subtasks HTML
+        let subtasksHtml = '';
+        if (task.subtasks && task.subtasks.length > 0) {
+            subtasksHtml = `<ul class="subtasks-list">`;
+            task.subtasks.forEach(st => {
+                subtasksHtml += `
+                    <li class="subtask-item ${st.completed ? 'completed' : ''}">
+                        <button class="subtask-checkbox" onclick="toggleSubtask(${task.id}, ${st.id})">
+                             <i class="fa-solid fa-check"></i>
+                        </button>
+                        <span class="subtask-text">${escapeHtml(st.text)}</span>
+                        <button class="subtask-delete" onclick="deleteSubtask(${task.id}, ${st.id})">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </li>
+                `;
+            });
+            subtasksHtml += `</ul>`;
+        }
 
         li.innerHTML = `
             <button class="check-btn">
@@ -269,6 +459,12 @@ function renderTasks() {
                     <span class="due-date ${overdueClass}"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
                 </div>
                 ` : ''}
+                
+                ${subtasksHtml}
+                
+                <div class="add-subtask-form">
+                    <input type="text" class="subtask-input" placeholder="Add subtask..." onkeydown="if(event.key === 'Enter') addSubtask(${task.id}, this.value)">
+                </div>
             </div>
 
             <div class="todo-actions">
@@ -291,6 +487,18 @@ function renderTasks() {
         const editBtn = li.querySelector('.edit-btn');
         const deleteBtn = li.querySelector('.delete-btn');
         const todoText = li.querySelector('.todo-text');
+
+        // Fix Inline Onclick Scoping Issue
+        // We need to attach these globally or use event delegation.
+        // For simplicity in this structure, let's attach event handlers dynamically
+        // But the inline onclicks in subtasks won't work because functions aren't global.
+        // We need to expose them or rewrite. Rewriting to use event delegation within logic.
+
+        // Remove Subtask DOM handlers and use cleaner approach?
+        // Let's make the subtask functions global for now as it's the easiest fix without refactoring entire render logic
+        window.toggleSubtask = toggleSubtask;
+        window.addSubtask = addSubtask;
+        window.deleteSubtask = deleteSubtask;
 
         checkBtn.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent bubbling if needed
@@ -316,6 +524,7 @@ function renderTasks() {
     });
 
     updateItemsLeft();
+    updateProgress();
 }
 
 function escapeHtml(text) {

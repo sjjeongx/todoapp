@@ -19,6 +19,37 @@
     --cat-health: #22c55e;
 }
 
+/* Light Theme Variables */
+body.light-theme {
+    --bg-color: #f8fafc;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    --accent-color: #0ea5e9;
+}
+
+body.light-theme .todo-item {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme .todo-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme #todo-input,
+body.light-theme .secondary-input input,
+body.light-theme .secondary-input select {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--text-primary);
+}
+
+body.light-theme input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.6;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -36,6 +67,7 @@ body {
     overflow-x: hidden;
     position: relative;
     padding: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Background Animation */
@@ -106,13 +138,19 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
 header {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 header h1 {
@@ -120,14 +158,145 @@ header h1 {
     font-weight: 600;
     background: linear-gradient(to right, #38bdf8, #818cf8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.05em;
+}
+
+#theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+#theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(15deg);
+}
+
+body.light-theme #theme-toggle {
+    background: rgba(0, 0, 0, 0.05);
+    color: #eab308;
+    /* Sun color */
+}
+
+/* Progress Bar */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+body.light-theme .progress-container {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    border-radius: 10px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #date-display {
     color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 300;
+}
+
+/* Controls (Search & Filter) */
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+#search-input {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0.6rem 1rem 0.6rem 2.2rem;
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+body.light-theme #search-input {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+#search-input:focus {
+    border-color: var(--accent-color);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+body.light-theme #search-input:focus {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    border-radius: 12px;
+}
+
+body.light-theme .filter-buttons {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.filter-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 6px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background: var(--bg-color);
+    /* Matches body bg for "tab" look */
+    color: var(--text-primary);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .filter-btn.active {
+    background: #fff;
 }
 
 /* Input Container */
@@ -492,4 +661,103 @@ footer {
     .input-container {
         gap: 8px;
     }
+}
+
+/* Subtasks */
+.subtasks-list {
+    list-style: none;
+    margin-top: 8px;
+    padding-left: 5px;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 8px;
+    width: 100%;
+}
+
+.subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.subtask-item.completed {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.subtask-checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+}
+
+.subtask-item.completed .subtask-checkbox {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+}
+
+.subtask-checkbox i {
+    font-size: 0.6rem;
+    color: var(--bg-color);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+}
+
+.subtask-item.completed .subtask-checkbox i {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.subtask-text {
+    flex: 1;
+    cursor: text;
+}
+
+.subtask-delete {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    opacity: 0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px;
+}
+
+.subtask-item:hover .subtask-delete {
+    opacity: 1;
+}
+
+.add-subtask-form {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.subtask-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    padding: 2px 0;
+    outline: none;
+}
+
+.subtask-input:focus {
+    border-color: var(--accent-color);
+}
+
+.subtask-input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
 }
