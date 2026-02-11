@@ -3,7 +3,6 @@
 A simple, elegant TODO application built with vanilla HTML, CSS, and JavaScript.
 
 ## Features
-## Features
 - **Subtasks**: Break down tasks into smaller steps.
 - **Search & Filter**: Quickly find tasks by text or status.
 - **Gamification**: Enjoy satisfying completion sounds and confetti celebrations.

@@ -29,6 +29,7 @@ let filterState = {
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Todo App Initialized v4.0');
     loadTheme();
     loadTasks();
     displayDate();
